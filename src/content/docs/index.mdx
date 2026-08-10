@@ -1,14 +1,18 @@
 ---
 title: audioproxy
-description: On-the-fly audio transcoding, from a URL.
+description: On-the-fly audio transcoding. Request variants by URL — previews, waveforms, normalized audio — rendered on demand and cached.
 template: splash
 hero:
-  tagline: Transcode audio on demand, from a URL. Previews, waveforms, normalization — one master, every variant, nothing generated in advance.
+  tagline: >-
+    Point it at your audio and request variants by URL — a 30-second preview,
+    waveform data, a normalized podcast MP3. One master serves every format,
+    nothing is generated in advance, and nothing is encoded twice.
+    If you know imgproxy, this is that, for audio.
   actions:
-    - text: Get started
+    - text: Render your first variant
       link: /start/quickstart/
       icon: right-arrow
-    - text: GitHub
+    - text: View on GitHub
       link: https://github.com/audioproxy/audioproxy
       icon: external
       variant: minimal
@@ -17,21 +21,25 @@ hero:
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
 <CardGrid stagger>
-  <Card title="URLs are the API" icon="approve-check">
-    Every variant is fully described by its signed URL — options double as the
-    cache key, so the same URL always means the same bytes.
+  <Card title="Describe the variant in the URL" icon="pencil">
+    `f:opus/br:96/t:0:30/fade:1:1` is a 30-second faded Opus preview. Options
+    double as the cache key, so one URL always means the same bytes — sign it
+    once and ship it anywhere.
   </Card>
-  <Card title="Streams while it encodes" icon="rocket">
-    First bytes leave before ffmpeg finishes. Cached variants serve with
-    Range support for instant seeking.
+  <Card title="Stream before the encode finishes" icon="rocket">
+    First bytes reach the client while ffmpeg is still working. Cached
+    variants serve with `Content-Length` and Range support, so players seek
+    instantly on every play after the first.
   </Card>
-  <Card title="Disk or S3, both sides" icon="setting">
-    Sources from a mounted directory or any S3-compatible store; the variant
-    cache likewise. One container, no database.
+  <Card title="Deploy one container" icon="seti:docker">
+    Sources on a mounted directory or in any S3-compatible store; the variant
+    cache likewise. No database, no queue, no sidecar — configuration is a
+    handful of environment variables.
   </Card>
-  <Card title="Reference on hexdocs" icon="open-book">
-    Module-level API documentation lives on
-    [hexdocs.pm/audio_proxy](https://hexdocs.pm/audio_proxy) — this site is
-    for operating and integrating.
+  <Card title="Build against the contract" icon="open-book">
+    The [API contract](/reference/api-v1/) fixes the URL grammar, cache-key
+    rules and error codes; module-level reference lives on
+    [hexdocs.pm/audio_proxy](https://hexdocs.pm/audio_proxy). This site covers
+    operating and integrating.
   </Card>
 </CardGrid>

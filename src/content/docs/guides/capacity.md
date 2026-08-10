@@ -1,10 +1,9 @@
 ---
 title: "Capacity: sizing a container"
+description: "Worst-case memory as arithmetic: the model, a measured per-format table, and a sizing matrix."
 ---
 
-:::note
-Synced from [`audioproxy@4e37081`](https://github.com/audioproxy/audioproxy/blob/4e37081/docs/capacity.md) — that repo is canonical; edit there, then re-run `bin/sync-proxy-docs`.
-:::
+<!-- synced from audioproxy@4e37081 docs/capacity.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 How much memory one `audio_proxy` container needs, as arithmetic over its
 configuration rather than a number somebody once observed.

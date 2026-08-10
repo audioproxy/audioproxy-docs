@@ -1,10 +1,9 @@
 ---
 title: "Development"
+description: "Toolchain, per-slice worktrees, the test suite and its tags, CI jobs, and how a release is cut."
 ---
 
-:::note
-Synced from [`audioproxy@4e37081`](https://github.com/audioproxy/audioproxy/blob/4e37081/docs/development.md) — that repo is canonical; edit there, then re-run `bin/sync-proxy-docs`.
-:::
+<!-- synced from audioproxy@4e37081 docs/development.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 How work happens in this repository: the pinned toolchain, the per-slice
 worktree workflow, the test suite and its tags, and the CI gate. None of it is

@@ -1,10 +1,9 @@
 ---
 title: "Source resolution"
+description: "Source forms and encodings — local://, s3://, https:// — the allowlist grammar, and what the proxy refuses."
 ---
 
-:::note
-Synced from [`audioproxy@4e37081`](https://github.com/audioproxy/audioproxy/blob/4e37081/docs/sources.md) — that repo is canonical; edit there, then re-run `bin/sync-proxy-docs`.
-:::
+<!-- synced from audioproxy@4e37081 docs/sources.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 How the source segment of a signed URL becomes something the renderer can
 fetch. The work splits in two, and the split is the design:

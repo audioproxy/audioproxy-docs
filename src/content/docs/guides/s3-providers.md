@@ -1,10 +1,9 @@
 ---
 title: "S3-compatible providers"
+description: "Working configurations for AWS, MinIO, Cloudflare R2, Tigris and other S3-compatible stores."
 ---
 
-:::note
-Synced from [`audioproxy@4e37081`](https://github.com/audioproxy/audioproxy/blob/4e37081/docs/s3-providers.md) — that repo is canonical; edit there, then re-run `bin/sync-proxy-docs`.
-:::
+<!-- synced from audioproxy@4e37081 docs/s3-providers.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 The proxy talks to object storage over the S3 API, so it is not limited to AWS.
 Point `AP_S3_ENDPOINT` at another provider and addressing defaults to

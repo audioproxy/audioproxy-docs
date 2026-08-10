@@ -29,7 +29,7 @@ export default defineConfig({
           items: [
             { label: 'API contract (v1)', slug: 'reference/api-v1' },
             { label: 'Module docs (hexdocs)', link: 'https://hexdocs.pm/audio_proxy' },
-            { label: 'llms.txt', link: 'https://github.com/audioproxy/audioproxy/tree/main/priv/llms' },
+            { label: 'llms.txt', link: 'https://github.com/audioproxy/audioproxy/blob/main/llms.txt' },
           ],
         },
       ],

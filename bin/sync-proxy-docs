@@ -9,50 +9,49 @@ require "fileutils"
 SRC = File.expand_path(ARGV[0] || "../audioproxy", __dir__ + "/..")
 DST = File.expand_path("../src/content/docs", __dir__)
 
+# destination and a curated description per page (rendered in search results
+# and link previews; the H1-derived title alone says too little there)
 MAP = {
-  "sources.md"            => "guides/sources.md",
-  "scaling.md"            => "guides/scaling.md",
-  "capacity.md"           => "guides/capacity.md",
-  "s3-providers.md"       => "guides/s3-providers.md",
-  "rendering.md"          => "guides/rendering.md",
-  "ffmpeg-arguments.md"   => "guides/ffmpeg-arguments.md",
-  "development.md"        => "guides/development.md",
-  "audio-proxy-api-v1.md" => "reference/api-v1.md",
+  "sources.md"            => ["guides/sources.md",          "Source forms and encodings — local://, s3://, https:// — the allowlist grammar, and what the proxy refuses."],
+  "scaling.md"            => ["guides/scaling.md",          "Multi-node deployment: load balancing, readiness, Kubernetes and Fly.io wiring, and what stays per-node."],
+  "capacity.md"           => ["guides/capacity.md",         "Worst-case memory as arithmetic: the model, a measured per-format table, and a sizing matrix."],
+  "s3-providers.md"       => ["guides/s3-providers.md",     "Working configurations for AWS, MinIO, Cloudflare R2, Tigris and other S3-compatible stores."],
+  "rendering.md"          => ["guides/rendering.md",        "How a render runs: the ffmpeg subprocess, chunk streaming, coalescing, slots, timeouts, and kill guarantees."],
+  "ffmpeg-arguments.md"   => ["guides/ffmpeg-arguments.md", "How processing options become ffmpeg arguments: filter order, per-format flags, and measured trade-offs."],
+  "development.md"        => ["guides/development.md",      "Toolchain, per-slice worktrees, the test suite and its tags, CI jobs, and how a release is cut."],
+  "audio-proxy-api-v1.md" => ["reference/api-v1.md",        "The v1 contract: URL grammar, processing options, cache-key rules, response semantics, and error codes."],
 }
 
-# target slug for rewritten intra-doc links
-SLUG = MAP.to_h { |src, dst| [src, "/" + dst.sub(/\.md\z/, "/")] }
+SLUG = MAP.to_h { |src, (dst, _)| [src, "/" + dst.sub(/\.md\z/, "/")] }
 
 sha = `git -C #{SRC} rev-parse --short HEAD`.strip
 abort "cannot resolve #{SRC}" if sha.empty?
 
-MAP.each do |src_name, dst_rel|
+MAP.each do |src_name, (dst_rel, description)|
   path = File.join(SRC, "docs", src_name)
   abort "missing #{path}" unless File.exist?(path)
   body = File.read(path)
 
-  # title from the first H1; strip it (Starlight renders the frontmatter title)
   title = body[/^#\s+(.+)$/, 1] or abort "no H1 in #{src_name}"
   body = body.sub(/^#\s+.+\n+/, "")
 
-  # intra-doc links -> site slugs (with optional #anchor)
   body = body.gsub(/\(([\w.-]+\.md)(#[^)\s]*)?\)/) do
     name, anchor = $1, $2
     SLUG[name] ? "(#{SLUG[name]}#{anchor})" : "(https://github.com/audioproxy/audioproxy/blob/main/docs/#{name}#{anchor})"
   end
-  # repo-relative links (../bin/foo, ../README.md ...) -> GitHub
   body = body.gsub(/\((\.\.\/[^)\s]+)\)/) do
     "(https://github.com/audioproxy/audioproxy/blob/main/#{$1.sub("../", "")})"
   end
 
   out = +"---\n"
   out << "title: \"#{title.gsub('"', '\"')}\"\n"
+  out << "description: \"#{description}\"\n"
   out << "---\n\n"
-  out << ":::note\nSynced from [`audioproxy@#{sha}`](https://github.com/audioproxy/audioproxy/blob/#{sha}/docs/#{src_name}) — that repo is canonical; edit there, then re-run `bin/sync-proxy-docs`.\n:::\n\n"
+  out << "<!-- synced from audioproxy@#{sha} docs/#{src_name} — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->\n\n"
   out << body
 
   dst = File.join(DST, dst_rel)
   FileUtils.mkdir_p(File.dirname(dst))
   File.write(dst, out)
-  puts "synced #{src_name} -> #{dst_rel}"
+  puts "synced #{src_name} -> #{dst_rel} (@#{sha})"
 end

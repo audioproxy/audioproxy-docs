@@ -1,10 +1,12 @@
 ---
 title: Quickstart
-description: A running proxy and a rendered variant in about a minute.
+description: Run the proxy against a directory of audio and render a preview, waveform data, and probe metadata in about a minute.
 ---
 
-Point the proxy at a directory of audio you already have. No signing key, no
-bucket, no config file:
+The proxy renders variants of audio you already have, so the fastest way to
+understand it is to point it at a directory of real files. The container below
+runs unsigned — the literal `insecure` stands in for a URL signature — which is
+the mode meant for exactly this first look and nothing more.
 
 ```bash
 docker run --rm -p 4000:4000 \
@@ -14,34 +16,41 @@ docker run --rm -p 4000:4000 \
   ghcr.io/audioproxy/audioproxy:0.4.0
 ```
 
-Ask for variants — `track.wav` means a file at the root of the directory you
-mounted:
+The mount is read-only (`:ro`) on purpose: write access to `AP_LOCAL_ROOT` is
+equivalent to choosing what the proxy will serve, so nothing should have it.
+
+Every request has the same shape — `/{signature}/{options}/{source}` — and the
+options segment fully describes the output. `track.wav` below names a file at
+the root of the directory you mounted:
 
 ```bash
 BASE=localhost:4000
 SRC='plain/local://track.wav'
 
-# 30-second Opus preview, faded in and out
+# A 30-second Opus preview at 96 kbps, fading in and out
 curl -o preview.opus "$BASE/insecure/f:opus/br:96/t:0:30/fade:1:1/$SRC"
 
-# Waveform peaks for a player UI
+# Waveform min/max pairs for drawing a player UI
 curl "$BASE/insecure/f:peaks/$SRC"
 
-# What is this file?
+# Duration, sample rate, channels — as JSON
 curl "$BASE/insecure/info/$SRC"
 ```
 
-Both audio responses start arriving while ffmpeg is still encoding. Change any
-option and you have a different variant — the URL is the whole request.
+The preview starts downloading before ffmpeg has finished encoding it: the
+response is chunked, produced as the encoder runs. Change any option and you
+have described a different variant — there is no server-side configuration to
+add, because the URL is the whole request. With a variant store configured,
+the second request for the same URL is served from the cache with Range
+support, which is what makes seeking work in players; the
+[rendering guide](/guides/rendering/) explains both response shapes.
 
-Two things before anything real:
+Before anything faces real traffic, replace `insecure` mode with signed URLs —
+while it is on, anyone who can reach the port can render anything under the
+root. The [README's signing section](https://github.com/audioproxy/audioproxy#signing-urls)
+contains the algorithm and a reference implementation in Elixir and Ruby.
 
-- **`AP_ALLOW_INSECURE` is development only.** The literal `insecure` stands in
-  for a signature; anyone reaching the port can render anything under the
-  root. See [the README's signing section](https://github.com/audioproxy/audioproxy#signing-urls)
-  for the real thing.
-- **Mount the directory read-only** (`:ro` above).
-
-From here: [Sources](/guides/sources/) for what you can point it at,
-[Scaling](/guides/scaling/) for deployment shapes, and the
-[API contract](/reference/api-v1/) for the exact grammar.
+From here, [Sources](/guides/sources/) covers what the proxy can read and how
+access is controlled, [Scaling](/guides/scaling/) covers deployment shapes
+from one container to a fleet, and the [API contract](/reference/api-v1/) is
+the exact grammar everything above is built on.

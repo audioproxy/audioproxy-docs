@@ -1,0 +1,40 @@
+# Re-syncs operator docs from the canonical audioproxy repo and commits the
+# result. Triggered by the proxy repo's dispatch when docs/** changes on its
+# main (see its .github/workflows/docs-dispatch.yml), manually, or weekly as
+# a belt-and-braces sweep. A commit here triggers the Netlify deploy once the
+# repo is connected.
+name: sync proxy docs
+
+on:
+  repository_dispatch:
+    types: [proxy-docs-updated]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: audioproxy/audioproxy
+          path: .audioproxy-src
+      - name: sync
+        run: bin/sync-proxy-docs .audioproxy-src
+      - name: commit if changed
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "docs-sync[bot]"
+            git config user.email "docs-sync@users.noreply.github.com"
+            SHA=$(git -C .audioproxy-src rev-parse --short HEAD)
+            git add src/content/docs
+            git commit -m "sync: proxy docs @ ${SHA}"
+            git push
+          else
+            echo "no changes"
+          fi
