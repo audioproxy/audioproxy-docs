@@ -3,7 +3,7 @@ title: "How options become ffmpeg arguments"
 description: "How processing options become ffmpeg arguments: filter order, per-format flags, and measured trade-offs."
 ---
 
-<!-- synced from audioproxy@4e37081 docs/ffmpeg-arguments.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- synced from audioproxy@4e37081 docs/ffmpeg-arguments.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 Implementation reference for `AudioProxy.Ffmpeg.Command`. Nothing here is
 needed to *use* the proxy — the option grammar in the

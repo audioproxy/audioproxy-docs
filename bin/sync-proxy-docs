@@ -12,7 +12,7 @@ DST = File.expand_path("../src/content/docs", __dir__)
 # destination and a curated description per page (rendered in search results
 # and link previews; the H1-derived title alone says too little there)
 MAP = {
-  "sources.md"            => ["guides/sources.md",          "Source forms and encodings — local://, s3://, https:// — the allowlist grammar, and what the proxy refuses."],
+  "sources.md"            => ["guides/sources.md",          "Source forms and encodings (local://, s3://, https://), the allowlist grammar, and what the proxy refuses."],
   "scaling.md"            => ["guides/scaling.md",          "Multi-node deployment: load balancing, readiness, Kubernetes and Fly.io wiring, and what stays per-node."],
   "capacity.md"           => ["guides/capacity.md",         "Worst-case memory as arithmetic: the model, a measured per-format table, and a sizing matrix."],
   "s3-providers.md"       => ["guides/s3-providers.md",     "Working configurations for AWS, MinIO, Cloudflare R2, Tigris and other S3-compatible stores."],
@@ -47,7 +47,7 @@ MAP.each do |src_name, (dst_rel, description)|
   out << "title: \"#{title.gsub('"', '\"')}\"\n"
   out << "description: \"#{description}\"\n"
   out << "---\n\n"
-  out << "<!-- synced from audioproxy@#{sha} docs/#{src_name} — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->\n\n"
+  out << "<!-- synced from audioproxy@#{sha} docs/#{src_name}; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->\n\n"
   out << body
 
   dst = File.join(DST, dst_rel)

@@ -3,7 +3,7 @@ title: "Rendering"
 description: "How a render runs: the ffmpeg subprocess, chunk streaming, coalescing, slots, timeouts, and kill guarantees."
 ---
 
-<!-- synced from audioproxy@4e37081 docs/rendering.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- synced from audioproxy@4e37081 docs/rendering.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 How a render runs: the subprocess, the chunk stream it produces, and the rules
 that bound it. The argument vector handed to that subprocess is a separate

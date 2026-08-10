@@ -3,7 +3,7 @@ title: "Running more than one node"
 description: "Multi-node deployment: load balancing, readiness, Kubernetes and Fly.io wiring, and what stays per-node."
 ---
 
-<!-- synced from audioproxy@4e37081 docs/scaling.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- synced from audioproxy@4e37081 docs/scaling.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 One container is the whole product for most deployments: it is stateless, it renders as fast as its CPU allows, and [docs/capacity.md](/guides/capacity/) tells you how much memory a given `AP_MAX_CONCURRENCY` needs. This document is about the point after that — when one node's schedulers are the ceiling, and the answer is more nodes.
 

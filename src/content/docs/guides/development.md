@@ -3,7 +3,7 @@ title: "Development"
 description: "Toolchain, per-slice worktrees, the test suite and its tags, CI jobs, and how a release is cut."
 ---
 
-<!-- synced from audioproxy@4e37081 docs/development.md — canonical there; edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- synced from audioproxy@4e37081 docs/development.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
 
 How work happens in this repository: the pinned toolchain, the per-slice
 worktree workflow, the test suite and its tags, and the CI gate. None of it is
