@@ -5,7 +5,7 @@ description: Run the proxy against a directory of audio and render a preview, wa
 
 The proxy renders variants of audio you already have, so the fastest way to
 understand it is to point it at a directory of real files. The container below
-runs unsigned — the literal `insecure` stands in for a URL signature — which is
+runs unsigned (the literal `insecure` stands in for a URL signature), which is
 the mode meant for exactly this first look and nothing more.
 
 ```bash
@@ -19,7 +19,7 @@ docker run --rm -p 4000:4000 \
 The mount is read-only (`:ro`) on purpose: write access to `AP_LOCAL_ROOT` is
 equivalent to choosing what the proxy will serve, so nothing should have it.
 
-Every request has the same shape — `/{signature}/{options}/{source}` — and the
+Every request has the same shape, `/{signature}/{options}/{source}`, and the
 options segment fully describes the output. `track.wav` below names a file at
 the root of the directory you mounted:
 
@@ -33,20 +33,20 @@ curl -o preview.opus "$BASE/insecure/f:opus/br:96/t:0:30/fade:1:1/$SRC"
 # Waveform min/max pairs for drawing a player UI
 curl "$BASE/insecure/f:peaks/$SRC"
 
-# Duration, sample rate, channels — as JSON
+# Duration, sample rate, channels, as JSON
 curl "$BASE/insecure/info/$SRC"
 ```
 
 The preview starts downloading before ffmpeg has finished encoding it: the
 response is chunked, produced as the encoder runs. Change any option and you
-have described a different variant — there is no server-side configuration to
+have described a different variant; there is no server-side configuration to
 add, because the URL is the whole request. With a variant store configured,
 the second request for the same URL is served from the cache with Range
 support, which is what makes seeking work in players; the
 [rendering guide](/guides/rendering/) explains both response shapes.
 
-Before anything faces real traffic, replace `insecure` mode with signed URLs —
-while it is on, anyone who can reach the port can render anything under the
+Before anything faces real traffic, replace `insecure` mode with signed URLs.
+While it is on, anyone who can reach the port can render anything under the
 root. The [README's signing section](https://github.com/audioproxy/audioproxy#signing-urls)
 contains the algorithm and a reference implementation in Elixir and Ruby.
 

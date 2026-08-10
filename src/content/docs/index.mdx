@@ -1,10 +1,10 @@
 ---
 title: audioproxy
-description: On-the-fly audio transcoding. Request variants by URL — previews, waveforms, normalized audio — rendered on demand and cached.
+description: On-the-fly audio transcoding. Request variants by URL (previews, waveforms, normalized audio), rendered on demand and cached.
 template: splash
 hero:
   tagline: >-
-    Point it at your audio and request variants by URL — a 30-second preview,
+    Point it at your audio and request variants by URL: a 30-second preview,
     waveform data, a normalized podcast MP3. One master serves every format,
     nothing is generated in advance, and nothing is encoded twice.
     If you know imgproxy, this is that, for audio.
@@ -23,7 +23,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 <CardGrid stagger>
   <Card title="Describe the variant in the URL" icon="pencil">
     `f:opus/br:96/t:0:30/fade:1:1` is a 30-second faded Opus preview. Options
-    double as the cache key, so one URL always means the same bytes — sign it
+    double as the cache key, so one URL always means the same bytes. Sign it
     once and ship it anywhere.
   </Card>
   <Card title="Stream before the encode finishes" icon="rocket">
@@ -33,7 +33,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
   </Card>
   <Card title="Deploy one container" icon="seti:docker">
     Sources on a mounted directory or in any S3-compatible store; the variant
-    cache likewise. No database, no queue, no sidecar — configuration is a
+    cache likewise. No database, no queue, no sidecar; configuration is a
     handful of environment variables.
   </Card>
   <Card title="Build against the contract" icon="open-book">
