@@ -1,0 +1,37 @@
+---
+title: audioproxy
+description: On-the-fly audio transcoding, from a URL.
+template: splash
+hero:
+  tagline: Transcode audio on demand, from a URL. Previews, waveforms, normalization — one master, every variant, nothing generated in advance.
+  actions:
+    - text: Get started
+      link: /start/quickstart/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/audioproxy/audioproxy
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid stagger>
+  <Card title="URLs are the API" icon="approve-check">
+    Every variant is fully described by its signed URL — options double as the
+    cache key, so the same URL always means the same bytes.
+  </Card>
+  <Card title="Streams while it encodes" icon="rocket">
+    First bytes leave before ffmpeg finishes. Cached variants serve with
+    Range support for instant seeking.
+  </Card>
+  <Card title="Disk or S3, both sides" icon="setting">
+    Sources from a mounted directory or any S3-compatible store; the variant
+    cache likewise. One container, no database.
+  </Card>
+  <Card title="Reference on hexdocs" icon="open-book">
+    Module-level API documentation lives on
+    [hexdocs.pm/audio_proxy](https://hexdocs.pm/audio_proxy) — this site is
+    for operating and integrating.
+  </Card>
+</CardGrid>
