@@ -3,28 +3,17 @@ title: "Source resolution"
 description: "Source forms and encodings (local://, s3://, https://), the allowlist grammar, and what the proxy refuses."
 ---
 
-<!-- synced from audioproxy@767d8db docs/sources.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- adapted from the audioproxy repo's docs/sources.md; authored here for the user-facing site -->
 
-How the source segment of a signed URL becomes something the renderer can
-fetch. The work splits in two, and the split is the design:
+The last portion of every URL names the audio you want rendered: a file under
+a mounted directory, an object in an S3 bucket, or a URL at an origin you
+control. This page covers how to write that portion, how access to each kind
+of source is controlled, and what the proxy refuses to touch. For the exact
+grammar, see the [API contract](/reference/api-v1/) §1.
 
-- **`AudioProxy.Source`** owns what the *encodings* imply — `plain/` versus
-  `enc/`, decoding exactly once, the rejections no source should survive,
-  dispatch by scheme, and the canonical-identity contract that
-  `AudioProxy.CacheKey` hashes. It is pure and offline.
-- **`AudioProxy.Source.Type`** is what a source *is*. One module per scheme,
-  each shipping in its own slice: `local://` with `add-local-files-source`,
-  `s3://` and `https://` with `add-remote-files-source`.
-
-For the URL grammar see [`audio-proxy-api-v1.md`](/reference/api-v1/) §1.
-
-> **Status.** Three types are registered: `local://`
-> (`AudioProxy.Source.Local`), `s3://` (`AudioProxy.Source.S3`) and `https://`
-> (`AudioProxy.Source.Https`). `local://` and `s3://` have storage backends
-> and render. `https://` parses, canonicalizes and authorizes but has none —
-> `stat/1` and `ffmpeg_input/1` answer `{:error, :no_backend}` → **404**,
-> until `add-https-source-backend` lands. Any other scheme, `http://`
-> included, is `{:error, :unknown_scheme}`.
+> **Status.** `local://` and `s3://` sources render today. An `https://`
+> source is parsed and checked against the allowlist, but answers `404` until
+> HTTPS fetching ships. Any other scheme, `http://` included, is refused.
 ## Two encodings, one source
 
 | Form | Example |
@@ -178,7 +167,7 @@ choosing what the proxy will serve.
 
 Two forms, one policy. `s3://{bucket}/{key}` names an object in a bucket;
 `https://{host}/{path}` names a URL at an origin. Both are gated by
-`AP_SOURCE_ALLOWLIST` (`AudioProxy.Source.Allowlist`). `s3://` renders;
+`AP_SOURCE_ALLOWLIST`. `s3://` renders;
 `https://` does not yet — see the status note at the top.
 
 ### `s3://`: an object in a bucket
@@ -200,12 +189,12 @@ is four orders of magnitude short of what makes `local://`'s cap a
 denial-of-service control, so this is a protocol bound rather than a scheduler
 defence — but an input that cannot name an object should not be scanned at all.
 
-#### The storage seam
+#### How the proxy reads S3
 
-`stat/1` is one `AudioProxy.S3.head/2` and reports the object's size and ETag:
+Before rendering, one HEAD request fetches the object's size and ETag:
 the size is what answers **413** before a subprocess is spawned, the ETag is
-what `/info`'s validator hashes. `ffmpeg_input/1` is one
-`AudioProxy.S3.presign_get/3`, handed to ffmpeg as a single argv element, so
+what `/info`'s validator hashes. The object itself is handed to ffmpeg as a
+presigned URL, so
 ffmpeg opens the object itself and issues its own Range requests — no source
 bytes cross the BEAM, and `-ss` on a two-hour master reads only what it needs.
 
@@ -219,26 +208,24 @@ not need a long TTL.
 
 #### Failures classify by cause, not by convenience
 
-`AudioProxy.S3`'s error type is five atoms and one `{:http, status, _}` whose
-status is *unbounded*, and all of it is mapped explicitly, with no catch-all —
-an unmapped shape raises rather than picking a plausible status.
+Every way an S3 request can fail maps to an HTTP status explicitly, with no
+catch-all: a failure shape the proxy does not recognize is a loud error, never
+a plausible-looking guess.
 
-| `AudioProxy.S3` error | Reason | Status |
-|---|---|---|
-| `:not_found` | `:not_found` | `404`, the blind row |
-| `:access_denied` | `:not_found` | `404`, the blind row |
-| `{:http, 4xx, _}` | `:not_found` | `404`, the blind row |
-| `{:http, 3xx, _}` | `:not_configured` | `500` |
-| `:not_configured` | `:not_configured` | `500` |
-| `{:http, 5xx, _}` | `:upstream_unavailable` | `502` |
-| `{:transport, _}` | `:upstream_unavailable` | `502` |
+| What happened at the store | Status |
+|---|---|
+| Object missing | `404`, the blind row |
+| Access denied | `404`, the blind row |
+| Any other 4xx from the store | `404`, the blind row |
+| A redirect (wrong-region bucket) | `500` |
+| S3 credentials not configured | `500` |
+| The store answered 5xx | `502` |
+| The store was unreachable | `502` |
 
 The status *ranges* are the part worth reading twice. An earlier revision
-covered 4xx and 5xx and called that total, which it is not: the HTTP client
-sets `autoredirect: false`, so S3's "your bucket is in another region" arrives
-as `{:http, 301, _}` and raised `FunctionClauseError` — a bare `500`, which is
-the outcome the no-catch-all rule exists to prevent, reached by leaving a hole
-rather than adding a default. A redirect is an operator's misconfiguration, not
+covered 4xx and 5xx and called that total, which it is not: redirects are not
+followed (deliberately), so S3's "your bucket is in another region" arrived as
+a 301 nothing handled. A redirect is an operator's misconfiguration, not
 a transient one, so it answers `500` and not the `502` that would invite a
 retry that cannot succeed.
 
@@ -372,47 +359,11 @@ Two more rules worth knowing:
 A source that fails the allowlist is `{:error, :not_allowed}` → the same **404**
 as a missing object. Nothing distinguishes "not allowed" from "not there".
 
-## The source-type contract
-
-A type is a module implementing `AudioProxy.Source.Type`, registered in a
-compile-time list. Nothing loads a source type from configuration.
-
-| Callback | Answers |
-|---|---|
-| `scheme/0`, `tag/0` | Which scheme it claims, and the tag its sources carry |
-| `parse/1` | The decoded body (everything after `scheme://`) → a typed source |
-| `canonical/1` | That source's identity string, which the cache key hashes |
-| `authorize/1` | May this source be served? |
-| `stat/1` | Size and ETag material, or "not there" |
-| `ffmpeg_input/1` | What ffmpeg gets as its input argument |
-
-**Authorization is a callback, not shared policy.** "Permitted" means a host
-allowlist for HTTPS, a bucket allowlist for S3, and confinement under a
-configured root for local files. A shared implementation would have to know
-all three, so there isn't one — the shared layer guarantees only that every
-type has an answer, not what answering means. Failures are uniformly
-`{:error, :not_allowed}`, which the HTTP layer renders as **404**: §5 of the
-API doc has no 403, and a distinct status would turn the policy into an
-existence oracle.
-
-**`stat/1` and `ffmpeg_input/1` are the storage seam** — exactly what the
-render and info flows need from a source, and the only two things they need.
-Size and ETag material answer 404/413 before a subprocess starts; the ffmpeg
-input is a path for a local source and a URL for a remote one, always a single
-argv element and never a shell string. `size` may be `nil` when the backing
-store genuinely does not know it; that is not an error. What still bounds such
-a source is the render byte cap, `AP_MAX_VARIANT_BYTES`, one render's retained
-output at a time — `AP_MAX_SRC_BYTES` itself goes unenforced, having no size to
-compare against.
-
-Declaring the seam alongside the rest of the contract is what makes a new
-backend a registration rather than an edit to the render and info flows.
-
 ## Canonical identity
 
-`canonical/1` produces the "what" half of a variant's identity — the string
-`AudioProxy.CacheKey` hashes alongside the normalized options. Each type
-renders its own, under two rules the shared layer imposes:
+Each source has one canonical spelling: the "what" half of a variant's
+identity, hashed into the cache key alongside the normalized options. Two
+rules hold for every source kind:
 
 - **Both encodings of one source must render identical bytes.** Guaranteed by
   construction: they parse to the same typed source.

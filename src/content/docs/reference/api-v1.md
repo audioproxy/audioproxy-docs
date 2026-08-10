@@ -3,7 +3,7 @@ title: "Audio Proxy — API v1 (draft)"
 description: "The v1 contract: URL grammar, processing options, cache-key rules, response semantics, and error codes."
 ---
 
-<!-- synced from audioproxy@767d8db docs/audio-proxy-api-v1.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- synced 1:1 from audioproxy@46d0943 docs/audio-proxy-api-v1.md; the contract is canonical there -->
 
 An imgproxy-style on-the-fly audio transcoding proxy. Sources live in S3 (or any HTTP-reachable store); variants are rendered on demand, streamed to the first requester, and written back to a variant bucket for cached, range-capable serving thereafter.
 

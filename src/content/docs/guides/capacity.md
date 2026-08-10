@@ -3,7 +3,7 @@ title: "Capacity: sizing a container"
 description: "Worst-case memory as arithmetic: the model, a measured per-format table, and a sizing matrix."
 ---
 
-<!-- synced from audioproxy@767d8db docs/capacity.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- adapted from the audioproxy repo's docs/capacity.md; authored here for the user-facing site -->
 
 How much memory one `audio_proxy` container needs, as arithmetic over its
 configuration rather than a number somebody once observed.
@@ -173,7 +173,7 @@ evidence: the two-hour rows land within a few megabytes of the sixty-second
 ones.
 
 **Output accumulates, all of it, until the render ends.**
-`AudioProxy.RenderCoordinator` retains every chunk ffmpeg emits, in memory, for
+The render coordinator retains every chunk ffmpeg emits, in memory, for
 the whole render — that is what lets a second request for the same variant join
 a render already in flight and still receive a complete stream. Nothing trims
 the backlog as clients consume it, because a client that has not arrived yet
@@ -194,12 +194,12 @@ RAM  ≈  BEAM_base  +  T_ffmpeg  +  (C + L) × (R_ffmpeg + B_backlog + H_pipeli
 | `BEAM_base` | The release at rest: ERTS, the supervision tree, Bandit's acceptors | Measured on the runtime image, idle and healthy | **≈ 110 MiB** anonymous |
 | `T_ffmpeg` | ffmpeg's shared library text, resident while any render runs | Measured; paid **once**, not per render — see [Why it is not multiplied](#t_ffmpeg-is-paid-once) | **50–130 MiB**; budget 150 MiB, reclaimable |
 | `C` | Simultaneous ffmpeg processes | `AP_MAX_CONCURRENCY` (default: schedulers online) | your setting |
-| `L` | Completed renders still holding their backlog | `@linger` in `AudioProxy.RenderCoordinator`, **1 s** | see [Why `C` is not enough](#why-c-is-not-enough-the-linger-window) |
+| `L` | Completed renders still holding their backlog | the coordinator's linger window, **1 s** | see [Why `C` is not enough](#why-c-is-not-enough-the-linger-window) |
 | `R_ffmpeg` | Private (anonymous) peak of one ffmpeg subprocess | Measured; [table below](#measured-r_ffmpeg) | 10–18 MiB plain, 64–74 MiB with `norm` |
-| `B_backlog` | Retained output bytes for one render | `AudioProxy.RenderCoordinator.retain/2`, capped by `AP_MAX_VARIANT_BYTES` | `min(variant size, AP_MAX_VARIANT_BYTES)` |
-| `H_pipeline` | Forwarded-but-unacknowledged bytes plus the port's read queue | `@high_water` in `AudioProxy.Ffmpeg.Render`, **1 MiB** | ≤ 1 MiB, and in practice far less |
+| `B_backlog` | Retained output bytes for one render | retained render output, capped by `AP_MAX_VARIANT_BYTES` | `min(variant size, AP_MAX_VARIANT_BYTES)` |
+| `H_pipeline` | Forwarded-but-unacknowledged bytes plus the port's read queue | the pipeline's high-water mark, **1 MiB** | ≤ 1 MiB, and in practice far less |
 | `U` | In-flight S3 write-back uploads | Not reachable today — see [The S3 write-back term](#the-s3-write-back-term) | **0** with a `file://` store |
-| `part_size` | Bytes buffered per multipart part | `@part_size` in `AudioProxy.S3`, **5 MiB** | 5 MiB, when `U > 0` |
+| `part_size` | Bytes buffered per multipart part | the multipart part size, **5 MiB** | 5 MiB, when `U > 0` |
 
 Everything here is a **worst case**, and deliberately so: it is the number that
 belongs in a container memory limit, not the number you expect to see in a
@@ -354,16 +354,15 @@ this document**. The only merged `AP_VARIANT_STORE` backend is `file://`, which
 streams to a staging file on disk and buffers nothing in memory beyond one
 chunk.
 
-When an `s3://` store does land it will upload through `AudioProxy.S3`, whose
-multipart path groups the stream into parts of exactly `@part_size` — 5 MiB — and
-holds one part at a time per upload. `U` is then the number of write-backs in
+An `s3://` store uploads via multipart, grouping the stream into parts of
+exactly 5 MiB and holding one part at a time per upload. `U` is then the number of write-backs in
 flight, which is bounded by `C + L` for the same reason the backlog term is: one
 tee per coordinator. Add 5 MiB per concurrent render and the model still holds.
 
 ## Coalescing does not multiply the cost
 
 `N` clients requesting the same variant while it renders do **not** cost `N`
-backlogs. `AudioProxy.RenderCoordinator` runs one render per cache key and
+backlogs. The coordinator runs one render per cache key and
 broadcasts each chunk to every subscriber; on the BEAM a binary of more than 64
 bytes is reference-counted and shared, so a broadcast `send` copies a pointer
 rather than the audio. Ten subscribers to one render cost one backlog plus ten
@@ -375,8 +374,7 @@ does not re-prove it.
 
 One caveat, because it is the exception that proves the rule: a client that
 *joins* a render already in flight is handed the backlog-so-far as a single
-contiguous binary (`IO.iodata_to_binary/1` in
-`AudioProxy.Plugs.RenderAction`), which is one transient copy of however much
+contiguous binary, which is one transient copy of however much
 had accumulated at the moment it joined. It is freed as soon as the chunk is
 written to the socket, and it does not recur — every subsequent chunk is shared.
 For preview-sized variants it is invisible. For a long-form render being joined
@@ -557,8 +555,8 @@ no image. It has already earned its place — it caught the published figures
 losing a slot to floating-point residue in about a fifth of the cells.
 
 **The measured table is regenerated from the image.** `bin/measure-ffmpeg-rss`
-takes its ffmpeg from the pinned runtime image and its argv from
-`AudioProxy.Ffmpeg.Command`, so it cannot be stale about the encoder or about
+takes its ffmpeg from the pinned runtime image and its arguments from the
+same builder the proxy uses, so it cannot be stale about the encoder or about
 the arguments the encoder is handed.
 
 **CI runs the model against the built image.** `bin/check-capacity` starts the

@@ -3,15 +3,14 @@ title: "Rendering"
 description: "How a render runs: the ffmpeg subprocess, chunk streaming, coalescing, slots, timeouts, and kill guarantees."
 ---
 
-<!-- synced from audioproxy@767d8db docs/rendering.md; canonical there. Edit in the proxy repo, then run bin/sync-proxy-docs -->
+<!-- adapted from the audioproxy repo's docs/rendering.md; authored here for the user-facing site -->
 
 How a render runs: the subprocess, the chunk stream it produces, and the rules
 that bound it. The argument vector handed to that subprocess is a separate
 subject — see [ffmpeg-arguments.md](/guides/ffmpeg-arguments/).
 
-`AudioProxy.Ffmpeg.Render` is one GenServer per render, under
-`AudioProxy.Ffmpeg.RenderSupervisor`. It owns exactly one ffmpeg process and
-exists for exactly as long as that process does.
+One supervised worker exists per render. It owns exactly one ffmpeg process
+and exists for exactly as long as that process does.
 
 ## The consumer contract
 
@@ -44,9 +43,9 @@ GPL-configured ffmpeg from reaching this source tree.
 The subprocess is spawned from an argv list with
 `Port.open({:spawn_executable, …}, args: argv)`. There is no shell anywhere in
 the path, which is what makes a source URL containing `;`, `$(…)`, a quote or a
-space simply one argument. The injection-safety property that
-`AudioProxy.Ffmpeg.Command` is written for only holds because nothing between
-it and `execve` re-parses its output.
+space simply one argument. The injection-safety property the
+argument builder is written for only holds because nothing between it and
+`execve` re-parses its output.
 
 ## Buffering, and what it is not
 
@@ -174,10 +173,8 @@ orphan.
 
 ## Coalescing: one render per cache key
 
-Requests do not reach `AudioProxy.Ffmpeg.Render` directly. They go through
-`AudioProxy.RenderCoordinator`, which is a single-flight in front of it: a
-`Registry` of unique cache keys, one coordinator process per key, and a
-`DynamicSupervisor` holding them. Twenty simultaneous requests for the same
+Requests do not start renders directly. They go through a single-flight
+coordinator: one coordinator process per cache key. Twenty simultaneous requests for the same
 variant run one ffmpeg, not twenty.
 
 Subscribing and starting are the same operation, which is what makes the start
@@ -227,7 +224,7 @@ Three ways a coordinator ends, differing in what happens to the key:
 ## Slots: `AP_MAX_CONCURRENCY` and the wait queue
 
 Coalescing bounds the worst hot-key case. What it cannot bound is a burst across
-*distinct* keys, and that is what `AudioProxy.Semaphore` is for: a counting
+*distinct* keys, and that is what the render semaphore is for: a counting
 semaphore of `AP_MAX_CONCURRENCY` slots with a FIFO wait queue of
 `AP_QUEUE_SIZE` behind it.
 
@@ -251,9 +248,8 @@ waiting for bytes either way.
 in the coordinator's `init/1`, so `subscribe/2` answers
 `{:error, {:queue_full, retry_after}}` and no coordinator is left registered
 under that key — the next request asks the semaphore again instead of joining
-something that is never going to render. `AudioProxy.ErrorJSON` renders that
-tuple as a `429` with `Retry-After`, which is the only place that header comes
-from.
+something that is never going to render. The client sees a `429` with
+`Retry-After`, which is the only place that header comes from.
 
 **A wait that runs out is the same 429, not a 504.** The queue being *full* and
 the queue being *too slow* are the same answer from the client's side, so they
@@ -289,15 +285,15 @@ coordinator stops, and the slot goes to the next waiter.
 
 Occupancy and queue depth are published as `[:audio_proxy, :semaphore, _]`
 telemetry events (`acquired`, `queued`, `rejected`, `released`, `abandoned`).
-`AudioProxy.Metrics` counts `rejected` from that set, and reads the gauges off
-`Semaphore.stats/2` per scrape rather than from the events — a gauge
+The metrics endpoint counts `rejected` from that set, and reads the gauges
+fresh per scrape rather than from the events — a gauge
 maintained by events needs its increments and decrements to balance for the
 life of the VM, and asking the semaphore what it holds cannot drift. Either
 way this path is untouched.
 
 ## Delivery over HTTP
 
-The render endpoint (`AudioProxy.Plugs.RenderAction`) is a consumer of the
+The render endpoint is a consumer of the
 contract above and nothing more: it subscribes to the coordinator for its cache
 key, writes the catch-up backlog if it was handed one, then loops on the mailbox
 writing each chunk with `Plug.Conn.chunk/2`. It reports which it was in

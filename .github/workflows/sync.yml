@@ -1,8 +1,7 @@
-# Re-syncs operator docs from the canonical audioproxy repo and commits the
-# result. Triggered by the proxy repo's dispatch when docs/** changes on its
-# main (see its .github/workflows/docs-dispatch.yml), manually, or weekly as
-# a belt-and-braces sweep. A commit here triggers the Netlify deploy once the
-# repo is connected.
+# Two jobs with different postures:
+#  - the API contract is synced 1:1 and committed automatically (it must be exact);
+#  - the authored guide pages are NOT overwritten — when their upstream
+#    counterparts change, a drift issue is opened for a human editorial pass.
 name: sync proxy docs
 
 on:
@@ -14,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   sync:
@@ -24,7 +24,11 @@ jobs:
         with:
           repository: audioproxy/audioproxy
           path: .audioproxy-src
-      - name: sync
+          fetch-depth: 0
+      - name: record previous sync point
+        id: prev
+        run: echo "sha=$(cat .synced-sha 2>/dev/null || echo '')" >> "$GITHUB_OUTPUT"
+      - name: sync the contract
         run: bin/sync-proxy-docs .audioproxy-src
       - name: commit if changed
         run: |
@@ -32,9 +36,33 @@ jobs:
             git config user.name "docs-sync[bot]"
             git config user.email "docs-sync@users.noreply.github.com"
             SHA=$(git -C .audioproxy-src rev-parse --short HEAD)
-            git add src/content/docs
-            git commit -m "sync: proxy docs @ ${SHA}"
+            git add -A
+            git commit -m "sync: api contract @ ${SHA}"
             git push
           else
             echo "no changes"
+          fi
+      - name: notify on authored-page drift
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREV: ${{ steps.prev.outputs.sha }}
+        run: |
+          [ -z "$PREV" ] && { echo "no previous sync point; skipping drift check"; exit 0; }
+          CHANGED=$(git -C .audioproxy-src diff --name-only "$PREV"..HEAD -- \
+            docs/sources.md docs/rendering.md docs/scaling.md docs/capacity.md docs/s3-providers.md 2>/dev/null || true)
+          [ -z "$CHANGED" ] && { echo "no drift in authored-page sources"; exit 0; }
+          TITLE="Docs drift: upstream operator docs changed"
+          BODY="Upstream files changed between \`$PREV\` and \`$(git -C .audioproxy-src rev-parse --short HEAD)\`:
+
+          \`\`\`
+          $CHANGED
+          \`\`\`
+
+          The corresponding site pages are authored here and are not auto-synced. Review the upstream diff and fold in whatever is user-relevant."
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --label docs-drift --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh label create docs-drift --repo "$GITHUB_REPOSITORY" --force --color D93F0B --description "Upstream docs changed; authored pages may need an editorial pass" > /dev/null
+            gh issue create --repo "$GITHUB_REPOSITORY" --label docs-drift --title "$TITLE" --body "$BODY"
           fi

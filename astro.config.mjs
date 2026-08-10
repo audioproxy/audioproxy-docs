@@ -20,8 +20,6 @@ export default defineConfig({
             { label: 'S3 providers', slug: 'guides/s3-providers' },
             { label: 'Scaling', slug: 'guides/scaling' },
             { label: 'Capacity planning', slug: 'guides/capacity' },
-            { label: 'ffmpeg arguments', slug: 'guides/ffmpeg-arguments' },
-            { label: 'Development', slug: 'guides/development' },
           ],
         },
         {
@@ -30,6 +28,13 @@ export default defineConfig({
             { label: 'API contract (v1)', slug: 'reference/api-v1' },
             { label: 'Module docs (hexdocs)', link: 'https://hexdocs.pm/audio_proxy' },
             { label: 'llms.txt', link: 'https://github.com/audioproxy/audioproxy/blob/main/llms.txt' },
+            ],
+          },
+          {
+            label: 'Project',
+            items: [
+              { label: 'Contributing', link: 'https://github.com/audioproxy/audioproxy/blob/main/docs/development.md' },
+              { label: 'ffmpeg internals', link: 'https://github.com/audioproxy/audioproxy/blob/main/docs/ffmpeg-arguments.md' },
           ],
         },
       ],
