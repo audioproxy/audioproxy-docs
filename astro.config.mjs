@@ -30,12 +30,6 @@ export default defineConfig({
           ],
         },
         {
-          label: 'Integrations',
-          items: [
-            { label: 'Rails', slug: 'integrations/rails' },
-          ],
-        },
-        {
           label: 'Reference',
           items: [
             { label: 'API contract (v1)', slug: 'reference/api-v1' },

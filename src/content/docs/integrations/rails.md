@@ -12,11 +12,9 @@ string), describe the variant, and it resolves the blob's storage service
 into the source form the proxy speaks, renders the options, and signs the
 result. It hooks in through a railtie; nothing to mount, no routes added.
 
-The gem is not on RubyGems yet, so install from GitHub for now:
-
 ```ruby
 # Gemfile
-gem "audioproxy-rails", github: "audioproxy/audioproxy-rails"
+gem "audioproxy-rails"
 ```
 
 Tell it where the proxy lives and how to sign, with the same key and salt
