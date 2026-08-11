@@ -323,7 +323,7 @@ Two things to read out of it:
 
 - **`norm` costs roughly 55 MiB more, flat.** Single-pass `loudnorm` buffers
   audio to measure loudness before it can correct it, and resamples to 192 kHz to
-  do so (see [ffmpeg-arguments.md](/guides/ffmpeg-arguments/) for why the filter order
+  do so (see the [contributor notes](https://github.com/audioproxy/audioproxy/blob/main/docs/ffmpeg-arguments.md) for why the filter order
   is what it is). That is a fixed window, not a growing one — the two-hour `norm`
   row costs the same as the sixty-second one — but it is several times the cost
   of an unfiltered render, so a deployment where every request carries `norm`

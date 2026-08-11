@@ -7,7 +7,7 @@ description: "How a render runs: the ffmpeg subprocess, chunk streaming, coalesc
 
 How a render runs: the subprocess, the chunk stream it produces, and the rules
 that bound it. The argument vector handed to that subprocess is a separate
-subject — see [ffmpeg-arguments.md](/guides/ffmpeg-arguments/).
+subject — see [Transforms](/guides/transforms/) for what can be asked for, and the [contributor notes](https://github.com/audioproxy/audioproxy/blob/main/docs/ffmpeg-arguments.md) for how it is assembled.
 
 One supervised worker exists per render. It owns exactly one ffmpeg process
 and exists for exactly as long as that process does.

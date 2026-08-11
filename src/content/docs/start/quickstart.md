@@ -37,6 +37,10 @@ curl "$BASE/insecure/f:peaks/$SRC"
 curl "$BASE/insecure/info/$SRC"
 ```
 
+In that first URL, `f:opus` picks the format, `br:96` the bitrate in kbps,
+`t:0:30` cuts the first thirty seconds, and `fade:1:1` fades a second at each
+edge; every option is covered in [Transforms](/guides/transforms/).
+
 The preview starts downloading before ffmpeg has finished encoding it: the
 response is chunked, produced as the encoder runs. Change any option and you
 have described a different variant; there is no server-side configuration to
@@ -50,7 +54,10 @@ While it is on, anyone who can reach the port can render anything under the
 root. The [README's signing section](https://github.com/audioproxy/audioproxy#signing-urls)
 contains the algorithm and a reference implementation in Elixir and Ruby.
 
-From here, [Sources](/guides/sources/) covers what the proxy can read and how
-access is controlled, [Scaling](/guides/scaling/) covers deployment shapes
+From here, [Transforms](/guides/transforms/) lists everything you can ask
+for, [Sources](/guides/sources/) covers what the proxy can read and how
+access is controlled, [Rails](/integrations/rails/) turns ActiveStorage
+attachments into signed variant URLs, [Rails integration](/integrations/rails/) turns
+ActiveStorage attachments into signed variant URLs, [Scaling](/guides/scaling/) covers deployment shapes
 from one container to a fleet, and the [API contract](/reference/api-v1/) is
 the exact grammar everything above is built on.

@@ -15,11 +15,24 @@ export default defineConfig({
         {
           label: 'Guides',
           items: [
-            { label: 'Sources', slug: 'guides/sources' },
+            { label: 'Transforms', slug: 'guides/transforms' },
+              { label: 'Sources', slug: 'guides/sources' },
             { label: 'Rendering', slug: 'guides/rendering' },
             { label: 'S3 providers', slug: 'guides/s3-providers' },
             { label: 'Scaling', slug: 'guides/scaling' },
             { label: 'Capacity planning', slug: 'guides/capacity' },
+          ],
+        },
+        {
+          label: 'Integrations',
+          items: [
+            { label: 'Rails', slug: 'integrations/rails' },
+          ],
+        },
+        {
+          label: 'Integrations',
+          items: [
+            { label: 'Rails', slug: 'integrations/rails' },
           ],
         },
         {
