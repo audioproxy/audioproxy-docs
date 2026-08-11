@@ -59,26 +59,32 @@ payload; the browser sends it as the POST body. There is no response to
 read and no promise to await, which is exactly right for telemetry: the
 player must never wait on analytics.
 
+You only need to reach for `sendBeacon` directly when you are building the
+collection side yourself. If your Rails app already runs
+[Ahoy](https://github.com/ankane/ahoy), its JavaScript client handles
+delivery, batching, and visit attribution for you, so the example below
+uses it.
+
 ## A Stimulus controller
 
-For a Rails app with [Stimulus](https://stimulus.hotwired.dev), wrap the
-audio element in a controller that translates media events into beacons.
-This one implements the listening-time bookkeeping described above:
+For a Rails app with [Stimulus](https://stimulus.hotwired.dev) and Ahoy,
+wrap the audio element in a controller that translates media events into
+[`ahoy.track`](https://github.com/ankane/ahoy.js) calls. This one
+implements the listening-time bookkeeping described above:
 
 ```js
 // app/javascript/controllers/playback_beacon_controller.js
 import { Controller } from "@hotwired/stimulus"
+import ahoy from "ahoy.js"
 
 // Reports play/progress/ended events for the <audio> element inside it.
 // <div data-controller="playback-beacon"
-//      data-playback-beacon-item-id-value="42"
-//      data-playback-beacon-url-value="/playback_events">
+//      data-playback-beacon-item-id-value="42">
 //   <audio src="..." controls></audio>
 // </div>
 export default class extends Controller {
   static values = {
-    itemId: String,               // your record id, echoed back in every event
-    url: String,                  // your collection endpoint
+    itemId: String,               // your record id, attached to every event
     interval: { type: Number, default: 15 }, // seconds of listening per progress event
   }
 
@@ -124,21 +130,42 @@ export default class extends Controller {
   onEnded = () => this.send("ended")
 
   send(event, extra = {}) {
-    navigator.sendBeacon(
-      this.urlValue,
-      JSON.stringify({ event, item_id: this.itemIdValue, ...extra })
-    )
+    ahoy.track(`audio.${event}`, { item_id: this.itemIdValue, ...extra })
   }
 }
 ```
 
-The values API keeps the controller reusable: the item id, the endpoint, and
-the progress interval all come from data attributes, so one controller serves
-every player on the site. The seek guard in `onTimeUpdate` is the piece most
-DIY trackers get wrong; without it, scrubbing inflates listening time and
-your retention numbers become fiction.
+The values API keeps the controller reusable: the item id and the progress
+interval come from data attributes, so one controller serves every player
+on the site. The `audio.` prefix namespaces the events in `ahoy_events`
+next to whatever else your app tracks. The seek guard in `onTimeUpdate` is
+the piece most DIY trackers get wrong; without it, scrubbing inflates
+listening time and your retention numbers become fiction.
 
-## Receiving events
+Nothing else is needed server-side: `ahoy.track` posts to the endpoint the
+Ahoy gem already mounts, and each event arrives with visit and user
+attribution attached. Total listening time per item is then one query away:
+
+```ruby
+Ahoy::Event.where(name: "audio.progress")
+           .where_props(item_id: item.id.to_s)
+           .count * 15   # seconds, at the default progress interval
+```
+
+## Without Ahoy
+
+If you are not running Ahoy, the controller stays identical apart from the
+`send` method, which posts the beacon itself to an endpoint you provide
+(add a `url` value next to `itemId` for it):
+
+```js
+send(event, extra = {}) {
+  navigator.sendBeacon(
+    this.urlValue,
+    JSON.stringify({ event, item_id: this.itemIdValue, ...extra })
+  )
+}
+```
 
 The endpoint can be as small as a controller that writes a row. Beacon
 requests are ordinary POSTs, so the one Rails-specific wrinkle is CSRF:
@@ -166,12 +193,6 @@ class PlaybackEventsController < ApplicationController
   end
 end
 ```
-
-If you already run [Ahoy](https://github.com/ankane/ahoy), you have this
-endpoint: replace the `send` method's beacon with `ahoy.track(event, {...})`
-from [ahoy.js](https://github.com/ankane/ahoy.js) and events arrive in
-`ahoy_events` with visit and user attribution handled for you. The Stimulus
-controller stays identical apart from that one method.
 
 Client telemetry is trivially forgeable, so treat it as directional product
 data, not as a billing or royalty ledger. Validate the shape, cap the rate
