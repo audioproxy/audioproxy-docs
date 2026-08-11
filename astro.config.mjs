@@ -7,6 +7,18 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'audioproxy',
+      head: [
+        // Privacy-friendly analytics by Plausible
+        {
+          tag: 'script',
+          attrs: { async: true, src: 'https://plausible.io/js/pa-1tE80iqRDeoqTKahlxCod.js' },
+        },
+        {
+          tag: 'script',
+          content:
+            'window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()',
+        },
+      ],
       customCss: [
         '@fontsource/bricolage-grotesque/400.css',
         '@fontsource/bricolage-grotesque/500.css',
