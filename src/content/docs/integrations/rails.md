@@ -28,6 +28,18 @@ audioproxy:
   salt: 9c217a3f…     # hex, the proxy's AP_SALT
 ```
 
+If your deployment carries secrets in environment variables rather than
+Rails credentials, configure in an initializer instead:
+
+```ruby
+# config/initializers/audioproxy.rb
+Audioproxy.configure do |config|
+  config.endpoint = "https://audio.example.com"   # absolute http(s) URL, path prefix allowed
+  config.key      = ENV["AP_KEY"]                 # hex string, decoded at assignment
+  config.salt     = ENV["AP_SALT"]                # hex string, decoded at assignment
+end
+```
+
 Then, to put a playable 96 kbps Opus version of an upload on a page
 (`format:` and `bitrate:` are the spelled-out aliases of the proxy's `f:`
 and `br:` [transforms](/guides/transforms/)):
