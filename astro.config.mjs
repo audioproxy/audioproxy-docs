@@ -18,6 +18,7 @@ export default defineConfig({
             { label: 'Transforms', slug: 'guides/transforms' },
               { label: 'Sources', slug: 'guides/sources' },
             { label: 'Rendering', slug: 'guides/rendering' },
+            { label: 'Playback analytics', slug: 'guides/playback-analytics' },
             { label: 'S3 providers', slug: 'guides/s3-providers' },
             { label: 'Scaling', slug: 'guides/scaling' },
             { label: 'Capacity planning', slug: 'guides/capacity' },
