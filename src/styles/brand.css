@@ -1,0 +1,49 @@
+/* audioproxy brand: stereo duotone + Monaspace/Bricolage type.
+   Docs lean on the left channel (cyan); the full pair is reserved for
+   marketing surfaces. See the brand board for tokens and usage rules. */
+
+:root {
+  /* dark (Starlight default) */
+  --sl-color-accent-low: #123a4a;
+  --sl-color-accent: #2bc5f0;
+  --sl-color-accent-high: #bdebfa;
+  --sl-color-bg: #0e0e13;
+  --sl-color-bg-nav: #0e0e13;
+  --sl-color-bg-sidebar: #0e0e13;
+
+  --sl-font: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --sl-font-mono: 'Monaspace Neon', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --ap-display: 'Monaspace Xenon', 'Monaspace Neon', ui-monospace, monospace;
+  --ap-ch-r: #ff4da3; /* right channel: wordmark seam only */
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #d9f1fa;
+  --sl-color-accent: #0077a6;
+  --sl-color-accent-high: #0a3a4e;
+  --sl-color-bg: #f7f7f4;
+  --sl-color-bg-nav: #f7f7f4;
+  --sl-color-bg-sidebar: #f7f7f4;
+
+  --ap-ch-r: #d6187e;
+}
+
+/* Headings in the display slab; docs-restrained tracking, marketing goes tighter. */
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3,
+.sl-markdown-content h4,
+h1[data-page-title],
+.hero h1,
+.site-title {
+  font-family: var(--ap-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Two-tone wordmark in the header: "audio" ink, "proxy" right channel. */
+.site-title {
+  position: relative;
+  color: var(--sl-color-white);
+}

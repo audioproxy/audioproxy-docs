@@ -7,6 +7,16 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'audioproxy',
+      customCss: [
+        '@fontsource/bricolage-grotesque/400.css',
+        '@fontsource/bricolage-grotesque/500.css',
+        '@fontsource/bricolage-grotesque/600.css',
+        '@fontsource/bricolage-grotesque/700.css',
+        '@fontsource/monaspace-xenon/800.css',
+        '@fontsource/monaspace-neon/400.css',
+        '@fontsource/monaspace-neon/700.css',
+        './src/styles/brand.css',
+      ],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/audioproxy/audioproxy' },
       ],
