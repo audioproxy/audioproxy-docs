@@ -15,7 +15,10 @@
   --sl-font-mono: 'Monaspace Neon', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --ap-display: 'Monaspace Xenon', 'Monaspace Neon', ui-monospace, monospace;
-  --ap-ch-r: #ff4da3; /* right channel: wordmark seam only */
+  --ap-ch-l: #2bc5f0;
+  --ap-ch-r: #ff4da3;
+  --ap-mix: #8f7bff;  /* the overprint: only where the channels meet */
+  --ap-ink: #0e0e13;
 }
 
 :root[data-theme='light'] {
@@ -26,7 +29,45 @@
   --sl-color-bg-nav: #f7f7f4;
   --sl-color-bg-sidebar: #f7f7f4;
 
+  --ap-ch-l: #0090c8;
   --ap-ch-r: #d6187e;
+  --ap-mix: #4b34c8;
+  --ap-ink: #101014;
+}
+
+/* From the Claude Design landing: magenta selection, violet link hover. */
+::selection {
+  background: var(--ap-ch-r);
+  color: var(--sl-color-bg);
+}
+.sl-markdown-content a:hover {
+  color: var(--ap-mix);
+}
+
+/* Hero CTAs: right-channel primary, overprint on hover. */
+.sl-link-button.primary {
+  background: var(--ap-ch-r);
+  border: 0;
+  color: var(--ap-ink);
+  font-family: var(--ap-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  border-radius: 3px;
+  transition: background 0.15s ease;
+}
+:root[data-theme='light'] .sl-link-button.primary {
+  color: var(--sl-color-bg);
+}
+.sl-link-button.primary:hover {
+  background: var(--ap-mix);
+  color: var(--sl-color-bg);
+}
+
+/* The splash hero headline gets the marketing scale; inner pages keep theirs. */
+[data-has-hero] .hero h1 {
+  font-size: clamp(2.9rem, 6.6vw, 5rem);
+  letter-spacing: -0.045em;
+  line-height: 0.94;
 }
 
 /* Headings in the display slab; docs-restrained tracking, marketing goes tighter. */

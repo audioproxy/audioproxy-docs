@@ -7,7 +7,16 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'audioproxy',
+      logo: {
+        light: './src/assets/mark-mixdown-light.svg',
+        dark: './src/assets/mark-mixdown-dark.svg',
+        alt: 'audioproxy',
+      },
+      favicon: '/favicon.svg',
       head: [
+        { tag: 'meta', attrs: { property: 'og:image', content: 'https://docs.audioproxy.dev/og.png' } },
+        { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://docs.audioproxy.dev/og.png' } },
         // Privacy-friendly analytics by Plausible
         {
           tag: 'script',
