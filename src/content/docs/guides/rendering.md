@@ -364,9 +364,20 @@ error envelope can only report that something went wrong.
 
 Three things worth knowing before you set it:
 
-- **An origin and nothing else** — scheme, host, optional port. A trailing
-  slash is refused at boot, because a browser never sends one in its `Origin`
-  header and the value would then match nobody.
+- **An origin and nothing else, spelled the way a browser spells it** — the
+  browser compares the header to its own `Origin` byte for byte, so a value
+  that means the right origin to a person but matches nothing in a browser is
+  refused at boot, with the canonical spelling in the error:
+
+  | Refused | Write instead |
+  |---|---|
+  | `https://app.example.com/` | `https://app.example.com` |
+  | `HTTPS://App.Example.com` | `https://app.example.com` |
+  | `https://app.example.com.` | `https://app.example.com` |
+  | `https://app.example.com:443` | `https://app.example.com` |
+
+  A non-default port stays: `http://localhost:5173` is what a dev server
+  sends.
 - **`AP_ALLOW_ORIGIN=*` allows every origin.** Reasonable for a public
   catalogue; think twice for anything a signed URL is meant to keep scoped.
   Under `*` the proxy omits `Vary: Origin`, since the response is then the
