@@ -112,6 +112,12 @@ Peaks respect `t` (a cut), `fade`, and `ch`, and refuse everything about
 change the drawn shape. One default differs: peaks are **mono** unless you
 ask for `ch:2`, because a waveform UI usually draws one shape.
 
+Fetching peaks from a page on another origin needs CORS turned on — unlike
+`<audio>` playback, which never did. Set `AP_ALLOW_ORIGIN` to the origin your
+page is served from; see [reading a response from a
+browser](/guides/rendering/#reading-a-response-from-a-browser) (0.5.0 and
+later).
+
 ## Deliver as a download
 
 ```

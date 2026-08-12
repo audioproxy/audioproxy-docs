@@ -324,3 +324,58 @@ by the render process, which owns the subprocess and can classify the failure.
 The endpoint applies the same budget to its own mailbox, slightly wider, so that
 a render dying without a word cannot leave a request hanging — but the timeout a
 client normally sees is the render's, with its class intact.
+
+## Reading a response from a browser
+
+> **Available from 0.5.0.** `AP_ALLOW_ORIGIN` ships in the 0.5.0 release;
+> earlier versions send no CORS headers and have no way to turn them on.
+
+Playing and reading are different privileges in a browser, and the proxy sends
+no CORS headers by default. An `<audio src="…">` pointed at the proxy plays
+from any page regardless — media elements do not need CORS — so a player is
+unaffected either way.
+
+Anything that reads the *bytes* does need it: `fetch()`ing `f:peaks` to draw a
+waveform, reading `/info` to size a UI before playback, or reading
+`Retry-After` off a `429` to back off politely. Without CORS the browser
+refuses the response and the page sees an opaque failure with no status in it.
+
+Name the origin the page is served from:
+
+```bash
+AP_ALLOW_ORIGIN=https://app.example.com
+```
+
+Every response the proxy sends then carries `Access-Control-Allow-Origin`,
+`Vary: Origin`, and
+
+```
+Access-Control-Expose-Headers: x-audio-proxy, retry-after, accept-ranges, etag
+```
+
+That last header is what makes the other four readable. The CORS filter hides
+every response header outside a small safelist, and all four of these are
+outside it — so without the expose list a page can see a `429` but not the
+`Retry-After` telling it how long to wait, and cannot read `X-Audio-Proxy` to
+tell a `MISS` from a `HIT`.
+
+Errors carry the headers too, deliberately. A page that cannot read the JSON
+error envelope can only report that something went wrong.
+
+Three things worth knowing before you set it:
+
+- **An origin and nothing else** — scheme, host, optional port. A trailing
+  slash is refused at boot, because a browser never sends one in its `Origin`
+  header and the value would then match nobody.
+- **`AP_ALLOW_ORIGIN=*` allows every origin.** Reasonable for a public
+  catalogue; think twice for anything a signed URL is meant to keep scoped.
+  Under `*` the proxy omits `Vary: Origin`, since the response is then the
+  same for everyone and varying on a header that changed nothing would
+  fragment every CDN entry.
+- **One origin, not a list.** For several, put a CDN or reverse proxy in
+  front.
+
+Setting the variable also makes `OPTIONS` answer the browser's preflight with
+a `204`; unset, `OPTIONS` is a `404` like every other non-GET method. Either
+way the URL signature is still what authorizes a request — CORS decides which
+page may *read* a response, never which requests are valid.
