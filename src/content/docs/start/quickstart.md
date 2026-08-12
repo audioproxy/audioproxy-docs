@@ -13,7 +13,7 @@ docker run --rm -p 4000:4000 \
   -e AP_ALLOW_INSECURE=true \
   -e AP_LOCAL_ROOT=/audio \
   -v /path/to/your/audio:/audio:ro \
-  ghcr.io/audioproxy/audioproxy:0.4.0
+  ghcr.io/audioproxy/audioproxy:0.5.0
 ```
 
 The mount is read-only (`:ro`) on purpose: write access to `AP_LOCAL_ROOT` is

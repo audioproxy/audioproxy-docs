@@ -327,8 +327,8 @@ client normally sees is the render's, with its class intact.
 
 ## Reading a response from a browser
 
-> **Available from 0.5.0.** `AP_ALLOW_ORIGIN` ships in the 0.5.0 release;
-> earlier versions send no CORS headers and have no way to turn them on.
+> **Requires 0.5.0 or later.** Earlier versions send no CORS headers and have
+> no way to turn them on.
 
 Playing and reading are different privileges in a browser, and the proxy sends
 no CORS headers by default. An `<audio src="…">` pointed at the proxy plays
