@@ -22,3 +22,9 @@ pnpm-debug.log*
 
 # Local Netlify folder
 .netlify
+
+# The upstream proxy checkout the sync workflow makes (actions/checkout with
+# a path). A working-directory artifact of the sync, never content: committed
+# it becomes a gitlink with no .gitmodules, which every consumer that checks
+# out submodules — Netlify among them — fails on.
+/.audioproxy-src

@@ -36,7 +36,14 @@ jobs:
             git config user.name "docs-sync[bot]"
             git config user.email "docs-sync@users.noreply.github.com"
             SHA=$(git -C .audioproxy-src rev-parse --short HEAD)
-            git add -A
+            # By path, and never `git add -A`. The upstream checkout lives at
+            # `.audioproxy-src/` inside this working directory, so `-A` staged
+            # it as a gitlink with no `.gitmodules` to resolve — after which
+            # every Netlify build died at "preparing repo", reported as a
+            # permissions error, and the site served the last good commit for
+            # four deploys while looking healthy. These two paths are the
+            # entire output of bin/sync-proxy-docs.
+            git add src/content/docs/reference/api-v1.md .synced-sha
             git commit -m "sync: api contract @ ${SHA}"
             git push
           else
