@@ -131,6 +131,48 @@ browser as `excerpt.flac`.
 without changing the audio: bump `cb:v2` to force a re-render after
 replacing a source file under the same name.
 
+## Worked examples
+
+The whole range in one place. These use the dev-mode `insecure` segment in
+place of a signature, as the [quickstart](/start/quickstart/) does; a real
+deployment [signs every URL](/guides/signing/).
+
+```bash
+BASE=localhost:4000
+SRC='plain/local://piece.wav'
+
+# A 30-second preview: Opus at 96 kbps, starting 12.5 s in,
+# half-second fade in and one-second fade out.
+curl "$BASE/insecure/f:opus/br:96/t:12.5:30/fade:0.5:1/$SRC"
+
+# Waveform peaks to draw a player UI, 800 min/max pairs as JSON.
+curl "$BASE/insecure/f:peaks/pts:800/$SRC"
+
+# The same peaks in the compact binary form, which is what you want
+# once the pair count gets large.
+curl -o peaks.dat "$BASE/insecure/f:peaks/pts:4000/pk_fmt:dat/$SRC"
+
+# Speech, small: 64 kbps mono MP3 at 22.05 kHz.
+curl "$BASE/insecure/f:mp3/br:64/ch:1/sr:22050/$SRC"
+
+# Normalised to −16 LUFS for podcast delivery.
+curl "$BASE/insecure/f:mp3/br:128/norm:ebu/$SRC"
+
+# Two minutes of 24-bit FLAC, offered to the browser as a download.
+curl -OJ "$BASE/insecure/f:flac/bd:24/t:60:120/dl:excerpt.flac/$SRC"
+
+# Mono 16 kHz WAV, the shape a speech-to-text pipeline wants.
+curl "$BASE/insecure/f:wav/ch:1/sr:16000/$SRC"
+
+# What is this file? (source metadata, as JSON)
+curl "$BASE/insecure/info/$SRC"
+```
+
+Each URL describes its output completely, so the same URL always means the
+same bytes. The first request for a variant renders it and streams it
+while it encodes; later requests come from the
+[variant store](/guides/variant-store/).
+
 ## Rules for combining
 
 The proxy refuses, with a `422` naming the offending option, anything that
