@@ -23,6 +23,7 @@ for a human and may change between releases; do not parse it.
 | `413` | `source_too_large` | The source exceeds `AP_MAX_SRC_BYTES`. Renders only; `/info` describes a source of any size |
 | `415` | `undecodable_source` | The source format is not decodable, or, on `/info`, carries no audio at all |
 | `415` | `video_source` | The source contains a video stream, and this proxy serves audio only. Cover art is not video |
+| `410` | `expired` | The URL carried an `exp` that has passed. The signature verified; only the clock refused it. Permanent, and cacheable as such. See [Expiring URLs](/guides/signing/#expiring-urls) |
 | `422` | `invalid_options` | Invalid or conflicting options; the message names the offending segment |
 | `429` | `queue_full` | A pool is full: either the render queue (or this request waited longer than `AP_RENDER_TIMEOUT` for a slot), or `AP_MAX_PROBE_CONCURRENCY` probes are already running. `Retry-After` is set either way, and the two are deliberately indistinguishable to a client |
 | `500` | `render_failed` | The render failed for a reason that is not yours: no encoder on the host, no disk space, a failure the proxy could not classify. Worth retrying |
@@ -36,10 +37,11 @@ for a human and may change between releases; do not parse it.
 
 Three groups, and the distinction is worth building into a client:
 
-- **Never retry unchanged.** `401`, `422`, `413`, `415`. These are pure
-  functions of the URL and the current source bytes. A bad signature never
-  becomes good and invalid options never become valid; only a different
-  URL, or a re-uploaded source, changes the answer.
+- **Never retry unchanged.** `401`, `410`, `422`, `413`, `415`. These are
+  pure functions of the URL and the current source bytes. A bad signature
+  never becomes good, an expired URL never becomes fresh, and invalid
+  options never become valid; only a different URL, or a re-uploaded
+  source, changes the answer.
 - **Retry with backoff.** `429`, `500`, `502`, `504`. All transient.
   `429` carries `Retry-After` and you should honour it rather than
   guessing. Reading that header from a browser needs CORS; see

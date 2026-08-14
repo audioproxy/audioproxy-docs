@@ -21,6 +21,7 @@ framework default.
 | `404` | `max-age=10` | Sources appear: a file uploaded moments after the miss is served within seconds |
 | `413`, `415` | `max-age=10` | Verdicts about the current source bytes, which a re-upload changes |
 | `401`, `422` | `max-age=60` | Pure functions of the URL: a bad signature never becomes good, invalid options never become valid, and only a deploy changes that |
+| `410` (expired) | `max-age=31536000, immutable` | The one verdict that is permanent by construction. An expired URL cannot become valid again, because the timestamp it is judged against is inside the signature, and no deploy changes that either. See [Expiring URLs](/guides/signing/#expiring-urls) |
 | `302` (cache hit, redirect mode) | `no-store` | The `Location` is a credential with an expiry; a cached redirect hands out URLs that no longer work |
 | `416` | `no-store` | The only response whose body depends on a request header, and nothing here sends `Vary: Range` |
 | `429`, `500`, `502`, `504` | `no-store` | Transient. Caching a transient failure amplifies it: `429` carries `Retry-After`, and a cached `502` would suppress the retry that would have worked |

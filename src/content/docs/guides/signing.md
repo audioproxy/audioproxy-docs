@@ -105,9 +105,53 @@ openssl rand -hex 32
 
 A signed URL is a bearer capability: the HMAC covers the path and nothing
 else, so anyone holding the URL can fetch it, and the only revocation is
-rotating the key, which invalidates every URL ever issued. Time-boxing a
-single URL is what the `exp` option is for; see the
-[API contract](/reference/api-v1/).
+rotating the key, which invalidates every URL ever issued. To time-box one
+URL instead, see [Expiring URLs](#expiring-urls) below.
+
+## Expiring URLs
+
+Add `exp:<unix-seconds>` to the options segment:
+
+```elixir
+rest = "/f:opus/br:96/exp:#{System.system_time(:second) + 300}/plain/s3://masters/piece.wav"
+
+AudioProxy.Signature.sign(rest, key, salt)
+```
+
+Requested before that second, it renders exactly as the same URL without
+`exp` would. From that second on, it is a `410`:
+
+```json
+{"error": "expired", "message": "URL has expired"}
+```
+
+`exp` needs no mechanism of its own to be tamper-proof. It sits in the
+path, so it is inside the signature, and changing or removing it is the
+same `401` as changing anything else.
+
+**It does not participate in the cache key.** That is the whole reason it
+is worth having as an option rather than a query parameter: mint a fresh
+five-minute URL on every page view and all of them still resolve to *one*
+rendered variant. Two requests differing only in `exp` coalesce into a
+single render, and the one already in the store answers both.
+
+**Expiry caps everything the response hands out.** A `200`'s
+`Cache-Control: max-age` is clamped to at most `exp − now`, so a CDN
+cannot keep serving the body after the URL is dead, and a cache-hit
+redirect's presigned storage URL is clamped to the same bound, so the
+`302` cannot trade a short-lived URL for a long-lived one. Without both,
+enforcement at the proxy would be theatre.
+
+Three things worth knowing before you generate them:
+
+- **There is no clock-skew leeway.** If you want a margin, add it to your
+  own timestamp. A margin here would be one every deployment pays.
+- **A timestamp in the past is a valid URL.** It signs, it parses, and it
+  answers `410`. It is not a `422`, which is what lets the `410` be a
+  permanent verdict a CDN can cache and serve on your behalf.
+- **`/info` cannot carry it**, because that endpoint has no options
+  segment. Info URLs are meant for your own services rather than for end
+  users.
 
 ## Dev mode
 
