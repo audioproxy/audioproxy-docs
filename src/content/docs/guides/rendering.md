@@ -225,8 +225,14 @@ Three ways a coordinator ends, differing in what happens to the key:
 
 Coalescing bounds the worst hot-key case. What it cannot bound is a burst across
 *distinct* keys, and that is what the render semaphore is for: a counting
-semaphore of `AP_MAX_CONCURRENCY` slots with a FIFO wait queue of
-`AP_QUEUE_SIZE` behind it.
+semaphore of `AP_MAX_CONCURRENCY` slots with a wait queue of `AP_QUEUE_SIZE`
+behind it, served first come, first served.
+
+The queue underneath supports ordered admission classes, so background work can
+be made to yield to a live listener. Nothing in the proxy asks for a class,
+which is why the queue is plain FIFO in every deployment and why there is no
+setting here to reach it with. Treat the ordering above as what you will
+observe.
 
 **A slot is per render, not per request.** The coordinator takes one before it
 spawns its pipeline and releases it from `terminate/2`, so twenty requests
@@ -235,7 +241,7 @@ lifetime — including the kill discipline, since the release happens *after* th
 cancel rather than before it. A slot handed over while the previous ffmpeg was
 still being SIGKILLed would exceed the cap by exactly the margin that takes.
 
-**The coordinator waits without blocking.** It asks with `Semaphore.request/1`,
+**The coordinator waits without blocking.** It asks with `request/2`,
 which answers immediately with `:granted`, `:queued` or a queue-full error, and
 starts its render when the grant arrives as a message. So a coordinator has one
 phase more than the render does — `:queued`, before `:rendering` — and keeps
