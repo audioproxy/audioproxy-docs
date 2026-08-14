@@ -117,9 +117,10 @@ Two things to know before you build URLs around it:
   On music it will sound like what it is: a de-esser and a compressor aimed at
   something else.
 
-`enhance` is refused with a `422` under `f:peaks`. Waveform data describes the
-source's own shape, and the preset's compression would reshape the envelope the
-picture is drawn from.
+It applies to [waveform data](#get-waveform-data) too: `f:peaks/enhance:voice`
+draws the picture from the enhanced audio, so a waveform under a player matches
+what the player is playing. `fade` behaves the same way. (`gain` and `norm` do
+not yet — they are still refused under `f:peaks`.)
 
 ## Resample, downmix, bit depth
 
@@ -230,6 +231,7 @@ bounded trim. The reasoning is cache honesty: an option that cannot change
 the bytes would give one variant two cache entries. Decimals are accepted
 to three places and refused beyond, for the same reason.
 
-`enhance` with `f:peaks` is refused for a neighbouring reason rather than that
-one — the preset *would* change a waveform, and that is the problem: peaks
-describe the source's own shape, not a processed version of it.
+The rule is "could this option change the picture", so options that *do* change
+the samples are drawn rather than refused: `t`, `ch`, `fade` and `enhance` all
+apply under `f:peaks`. `gain` and `norm` are refused today despite belonging to
+that group — a known gap rather than the principle.
