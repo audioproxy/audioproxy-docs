@@ -68,6 +68,13 @@ norm:ebu
 `norm:ebu:-14:-1:9` (integrated:peak:range). Normalization is single-pass:
 accurate enough for previews and podcast delivery, not for mastering work.
 
+It changes a variant's loudness and nothing else about it. A 96 kHz master
+normalized without an `sr` comes back at 96 kHz, a 44.1 kHz source at 44.1 —
+the rate a plain render of that source would have returned. Worth stating
+rather than assuming, because `loudnorm` works at 192 kHz internally and the
+render resamples back down afterwards; before 0.7.0 it resampled to a flat
+48 kHz instead, so normalizing a master quietly downsampled it.
+
 ```
 gain:-3
 ```
@@ -119,8 +126,7 @@ Two things to know before you build URLs around it:
 
 It applies to [waveform data](#get-waveform-data) too: `f:peaks/enhance:voice`
 draws the picture from the enhanced audio, so a waveform under a player matches
-what the player is playing. `fade` behaves the same way. (`gain` and `norm` do
-not yet — they are still refused under `f:peaks`.)
+what the player is playing. `fade`, `gain` and `norm` behave the same way.
 
 ## Resample, downmix, bit depth
 
@@ -132,6 +138,10 @@ The shape speech-to-text wants: `ch:1` downmixes to mono, `sr:16000`
 resamples to 16 kHz, and WAV keeps it uncompressed. `sr` accepts any rate
 in Hz but caps at 48000 for lossy formats (higher buys nothing audible and
 is refused explicitly). `ch` is `1` or `2`.
+
+Leave `sr` out and you get the source's own rate. That cap is a limit on what
+you may *ask* for, not on what you get back: a 96 kHz master rendered as
+`f:aac` without an `sr` really does come back at 96 kHz.
 
 ```
 f:flac/bd:24
@@ -153,10 +163,22 @@ drops straight into [peaks.js](https://github.com/bbc/peaks.js). `pts` is
 how many pairs you get (default 800, one per pixel of a typical player).
 `pk_fmt:dat` gives the compact binary form instead of JSON.
 
-Peaks respect `t` (a cut), `fade`, and `ch`, and refuse everything about
-*encoding* (`br`, `q`, `sr`, `bd`, `gain`, `norm`), since none of those can
-change the drawn shape. One default differs: peaks are **mono** unless you
-ask for `ch:2`, because a waveform UI usually draws one shape.
+Peaks respect everything that changes the samples: `t` (a cut), `ch`, `fade`,
+`enhance`, `gain` and `norm`. The picture is drawn from the audio the same URL
+would play, so a waveform under a normalized player is normalized too.
+
+> **`gain` and `norm` require 0.7.0 or later.** Earlier versions refuse them
+> under `f:peaks` with a `422`.
+
+What peaks refuse is anything that *cannot* change the drawn shape: `br`, `q`
+and `bd` are encoder settings, and peaks are never encoded, while `sr` moves
+the bucket boundaries without moving the waveform, since a bucket is a fraction
+of the total sample count rather than a fixed span of time. Each is a `422`
+rather than being ignored, so one picture can never be reachable through two
+different URLs.
+
+One default differs: peaks are **mono** unless you ask for `ch:2`, because a
+waveform UI usually draws one shape.
 
 Fetching peaks from a page on another origin needs CORS turned on — unlike
 `<audio>` playback, which never did. Set `AP_ALLOW_ORIGIN` to the origin your
