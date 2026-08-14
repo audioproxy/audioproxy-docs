@@ -47,8 +47,14 @@ export default defineConfig({
           label: 'Guides',
           items: [
             { label: 'Transforms', slug: 'guides/transforms' },
-              { label: 'Sources', slug: 'guides/sources' },
+            { label: 'Sources', slug: 'guides/sources' },
+            { label: 'Signing URLs', slug: 'guides/signing' },
+            { label: 'Source metadata', slug: 'guides/source-metadata' },
             { label: 'Rendering', slug: 'guides/rendering' },
+            { label: 'Variant store', slug: 'guides/variant-store' },
+            { label: 'Caching and CDNs', slug: 'guides/caching' },
+            { label: 'Configuration', slug: 'guides/configuration' },
+            { label: 'Operations', slug: 'guides/operations' },
             { label: 'Playback analytics', slug: 'guides/playback-analytics' },
             { label: 'S3 providers', slug: 'guides/s3-providers' },
             { label: 'Scaling', slug: 'guides/scaling' },
@@ -65,6 +71,7 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'API contract (v1)', slug: 'reference/api-v1' },
+            { label: 'Errors', slug: 'reference/errors' },
             { label: 'Module docs (hexdocs)', link: 'https://hexdocs.pm/audio_proxy' },
             { label: 'llms.txt', link: 'https://github.com/audioproxy/audioproxy/blob/main/llms.txt' },
             ],

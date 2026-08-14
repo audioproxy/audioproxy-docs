@@ -56,7 +56,8 @@ jobs:
         run: |
           [ -z "$PREV" ] && { echo "no previous sync point; skipping drift check"; exit 0; }
           CHANGED=$(git -C .audioproxy-src diff --name-only "$PREV"..HEAD -- \
-            docs/sources.md docs/rendering.md docs/scaling.md docs/capacity.md docs/s3-providers.md 2>/dev/null || true)
+            docs/sources.md docs/rendering.md docs/scaling.md docs/capacity.md docs/s3-providers.md \
+            docs/operations.md 2>/dev/null || true)
           [ -z "$CHANGED" ] && { echo "no drift in authored-page sources"; exit 0; }
           TITLE="Docs drift: upstream operator docs changed"
           BODY="Upstream files changed between \`$PREV\` and \`$(git -C .audioproxy-src rev-parse --short HEAD)\`:
