@@ -41,6 +41,23 @@ If you need the stricter behaviour for a specific deployment, an edge rule
 overriding `Cache-Control` on 4xx is the place to do it. The proxy has no
 knob for it by design.
 
+## Why a preset never changes under you
+
+`immutable` with a year of `max-age` is a strong promise, and one option makes
+it worth stating explicitly. `enhance:voice` ([0.7.0+](/guides/transforms/#clean-up-speech))
+names a *preset* — a curated chain of filters — so the URL carries the name and
+not the parameters behind it.
+
+That chain is fixed for the life of the value. If the preset is ever improved,
+the improvement ships as a new value (`voice2`), and `enhance:voice` keeps
+rendering exactly what it rendered before.
+
+The alternative would quietly break every cache in the path. Retuning a chain in
+place would hand two genuinely different renders one cache key: your CDN would
+keep serving the old bytes, a cold cache would produce the new ones, and nothing
+in the URL would tell them apart. Pinning is what lets you cache these responses
+for a year and never revalidate them.
+
 ## Revalidation costs no render
 
 A request whose `If-None-Match` matches the variant's `ETag` answers `304`

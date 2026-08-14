@@ -76,6 +76,51 @@ gain:-3
 ±100. With both present, normalization runs first and the gain offsets its
 result.
 
+## Clean up speech
+
+> **Requires 0.7.0 or later.** Earlier versions refuse `enhance` with a
+> `422`, as they do any unknown option.
+
+```
+enhance:voice
+```
+
+`enhance:voice` runs the chain interview and podcast audio usually wants:
+a high-pass to drop rumble and handling noise, denoising for hiss, de-essing
+for sibilance, gentle compression to even out a wandering mic distance, and a
+peak limiter so none of that can clip a source that did not clip. One option,
+no parameters to tune.
+
+It is deliberately not a set of knobs. Exposing the individual filters would
+put dozens of spellings in the URL for one intent and split the cache across
+all of them; a preset renders and caches as a single variant.
+
+**`enhance` and `norm` are independent, and combining them is normal:**
+
+```
+enhance:voice/norm:ebu
+```
+
+The preset shapes dynamics, `norm` hits a loudness target, and cleanup runs
+first so normalization measures the audio you are actually shipping. Reach for
+`enhance:voice` when the recording needs help, `norm` when the delivery needs a
+number, and both when both are true.
+
+Two things to know before you build URLs around it:
+
+- **A preset name is pinned to its chain permanently.** `enhance:voice` renders
+  the same way in every future version. If the chain is ever improved, the
+  improvement arrives as a *new* value (`voice2`) rather than changing what your
+  existing URLs return — which is what lets these responses stay
+  [`immutable`](/guides/caching/) with a year-long `max-age`.
+- **It is speech-shaped, not a mastering tool.** The settings assume a voice.
+  On music it will sound like what it is: a de-esser and a compressor aimed at
+  something else.
+
+`enhance` is refused with a `422` under `f:peaks`. Waveform data describes the
+source's own shape, and the preset's compression would reshape the envelope the
+picture is drawn from.
+
 ## Resample, downmix, bit depth
 
 ```
@@ -158,6 +203,9 @@ curl "$BASE/insecure/f:mp3/br:64/ch:1/sr:22050/$SRC"
 # Normalised to −16 LUFS for podcast delivery.
 curl "$BASE/insecure/f:mp3/br:128/norm:ebu/$SRC"
 
+# An interview recording, cleaned up and then normalised (0.7.0+).
+curl "$BASE/insecure/f:mp3/br:96/ch:1/enhance:voice/norm:ebu/$SRC"
+
 # Two minutes of 24-bit FLAC, offered to the browser as a download.
 curl -OJ "$BASE/insecure/f:flac/bd:24/t:60:120/dl:excerpt.flac/$SRC"
 
@@ -181,3 +229,7 @@ on lossy ones, encoding options with `f:peaks`, a fade-out without a
 bounded trim. The reasoning is cache honesty: an option that cannot change
 the bytes would give one variant two cache entries. Decimals are accepted
 to three places and refused beyond, for the same reason.
+
+`enhance` with `f:peaks` is refused for a neighbouring reason rather than that
+one — the preset *would* change a waveform, and that is the problem: peaks
+describe the source's own shape, not a processed version of it.
