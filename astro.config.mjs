@@ -7,6 +7,8 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'audioproxy',
+      description:
+        'Documentation for audioproxy: render audio variants from signed URLs. Formats, trims, loudness, waveform peaks, caching and deployment.',
       logo: {
         light: './src/assets/mark-mixdown-light.svg',
         dark: './src/assets/mark-mixdown-dark.svg',
